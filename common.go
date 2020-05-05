@@ -34,6 +34,7 @@ type commonState struct {
 	shouldRestart     ShouldRestart
 	noBeep            bool
 	needRefresh       bool
+	suspendFn         func()
 }
 
 // TabStyle is used to select how tab completions are displayed.
@@ -248,6 +249,15 @@ func (s *State) SetShouldRestart(f ShouldRestart) {
 // ASCII BEL, 0x07). Default is true (will beep).
 func (s *State) SetBeep(beep bool) {
 	s.noBeep = !beep
+}
+
+// SetSuspendFn sets the function to call when Ctrl-Z (^Z) is seen on
+// input.  If nil, ^Z is ignored. Else, the function is called
+// (without echoing "^Z\n", which the function can do if desired) and,
+// if and when it returns (due to SIGCONT), the input line is
+// refreshed.
+func (s *State) SetSuspendFn(f func()) {
+	s.suspendFn = f
 }
 
 func (s *State) promptUnsupported(p string) (string, error) {

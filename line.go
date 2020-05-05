@@ -343,6 +343,12 @@ func (s *State) printedTabs(items []string) func(tabDirection) (string, error) {
 							break prompt
 						case ctrlC, ctrlD, cr, lf:
 							s.restartPrompt()
+						case ctrlZ:
+							if s.suspendFn == nil {
+								s.doBeep()
+							} else {
+								s.suspendFn()
+							}
 						}
 					}
 				}
@@ -490,8 +496,14 @@ func (s *State) reverseISearch(origLine []rune, origPos int) ([]rune, int, inter
 			case ctrlG: // Cancel
 				return origLine, origPos, rune(esc), err
 
+			case ctrlZ:
+				if s.suspendFn == nil {
+					s.doBeep()
+				} else {
+					s.suspendFn()
+				}
 			case tab, cr, lf, ctrlA, ctrlB, ctrlD, ctrlE, ctrlF, ctrlK,
-				ctrlL, ctrlN, ctrlO, ctrlP, ctrlQ, ctrlT, ctrlU, ctrlV, ctrlW, ctrlX, ctrlY, ctrlZ:
+				ctrlL, ctrlN, ctrlO, ctrlP, ctrlQ, ctrlT, ctrlU, ctrlV, ctrlW, ctrlX, ctrlY:
 				fallthrough
 			case 0, ctrlC, esc, 28, 29, 30, 31:
 				return []rune(foundLine), foundPos, next, err
@@ -860,9 +872,12 @@ mainLoop:
 				line, pos, next, err = s.tabComplete(p, line, pos)
 				goto haveNext
 			case ctrlZ:
-				fmt.Println("^Z")
-				s.sleepToResume()
-				s.needRefresh = true
+				if s.suspendFn == nil {
+					s.doBeep()
+				} else {
+					s.suspendFn()
+					s.needRefresh = true
+				}
 			// Catch keys that do nothing, but you don't want them to beep
 			case esc:
 				// DO NOTHING
@@ -1144,9 +1159,16 @@ mainLoop:
 				pos = 0
 				fmt.Print(prompt)
 				s.restartPrompt()
+			case ctrlZ:
+				if s.suspendFn == nil {
+					s.doBeep()
+				} else {
+					s.suspendFn()
+					s.restartPrompt()
+				}
 			// Unused keys
 			case esc, tab, ctrlA, ctrlB, ctrlE, ctrlF, ctrlG, ctrlK, ctrlN, ctrlO, ctrlP, ctrlQ, ctrlR, ctrlS,
-				ctrlT, ctrlU, ctrlV, ctrlW, ctrlX, ctrlY, ctrlZ:
+				ctrlT, ctrlU, ctrlV, ctrlW, ctrlX, ctrlY:
 				fallthrough
 			// Catch unhandled control codes (anything <= 31)
 			case 0, 28, 29, 30, 31:

@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
-	"sync/atomic"
 	"syscall"
 	"time"
 )
@@ -349,19 +348,6 @@ func (s *State) readNext() (interface{}, error) {
 
 	// not reached
 	return r, nil
-}
-
-func (s *State) sleepToResume() {
-	if !atomic.CompareAndSwapInt32(&s.sleeping, 0, 1) {
-		return
-	}
-	defer atomic.StoreInt32(&s.sleeping, 0)
-
-	s.ExitRawMode()
-	ch := WaitForResume()
-	SuspendMe()
-	<-ch
-	s.EnterRawMode()
 }
 
 // Close returns the terminal to its previous mode
