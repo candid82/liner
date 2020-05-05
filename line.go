@@ -859,11 +859,15 @@ mainLoop:
 			case tab: // Tab completion
 				line, pos, next, err = s.tabComplete(p, line, pos)
 				goto haveNext
+			case ctrlZ:
+				fmt.Println("^Z")
+				s.sleepToResume()
+				s.needRefresh = true
 			// Catch keys that do nothing, but you don't want them to beep
 			case esc:
 				// DO NOTHING
 			// Unused keys
-			case ctrlG, ctrlO, ctrlQ, ctrlS, ctrlV, ctrlX, ctrlZ:
+			case ctrlG, ctrlO, ctrlQ, ctrlS, ctrlV, ctrlX:
 				fallthrough
 			// Catch unhandled control codes (anything <= 31)
 			case 0, 28, 29, 30, 31:

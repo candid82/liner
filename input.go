@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 )
@@ -51,7 +52,7 @@ func NewLiner() *State {
 		mode := s.origMode
 		mode.Iflag &^= icrnl | inpck | istrip | ixon
 		mode.Cflag |= cs8
-		mode.Lflag &^= syscall.ECHO | icanon | iexten
+		mode.Lflag &^= syscall.ECHO | isig | icanon | iexten
 		mode.ApplyMode()
 
 		winch := make(chan os.Signal, 1)
@@ -348,6 +349,19 @@ func (s *State) readNext() (interface{}, error) {
 
 	// not reached
 	return r, nil
+}
+
+func (s *State) sleepToResume() {
+	if !atomic.CompareAndSwapInt32(&s.sleeping, 0, 1) {
+		return
+	}
+	defer atomic.StoreInt32(&s.sleeping, 0)
+
+	s.ExitRawMode()
+	ch := WaitForResume()
+	SuspendMe()
+	<-ch
+	s.EnterRawMode()
 }
 
 // Close returns the terminal to its previous mode
