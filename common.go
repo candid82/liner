@@ -252,10 +252,12 @@ func (s *State) SetBeep(beep bool) {
 }
 
 // SetSuspendFn sets the function to call when Ctrl-Z (^Z) is seen on
-// input.  If nil, ^Z is ignored. Else, the function is called
-// (without echoing "^Z\n", which the function can do if desired) and,
-// if and when it returns (due to SIGCONT), the input line is
-// refreshed.
+// input.  If nil (the default), ^Z is ignored. Else, the function is
+// called (without echoing "^Z\n", which the function can do if
+// desired) and, if and when it returns (due to SIGCONT), the input
+// line is refreshed. The function should call s.Suspend() before
+// proceeding with the suspension (via SIGSTOP) and, if and when
+// SIGCONT continues the process, call s.Continue().
 func (s *State) SetSuspendFn(f func()) {
 	s.suspendFn = f
 }
