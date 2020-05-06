@@ -878,7 +878,7 @@ mainLoop:
 					s.doBeep()
 				} else {
 					s.suspendFn()
-					goto restart
+					s.needRefresh = true
 				}
 			// Catch keys that do nothing, but you don't want them to beep
 			case esc:
@@ -1166,7 +1166,7 @@ mainLoop:
 					s.doBeep()
 				} else {
 					s.suspendFn()
-					goto restart
+					s.needRefresh = true
 				}
 			// Unused keys
 			case esc, tab, ctrlA, ctrlB, ctrlE, ctrlF, ctrlG, ctrlK, ctrlN, ctrlO, ctrlP, ctrlQ, ctrlR, ctrlS,
