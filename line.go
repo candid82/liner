@@ -327,6 +327,7 @@ func (s *State) printedTabs(items []string) func(tabDirection) (string, error) {
 
 		if numTabs == 2 {
 			if len(items) > 100 {
+			restart:
 				fmt.Printf("\nDisplay all %d possibilities? (y or n) ", len(items))
 			prompt:
 				for {
@@ -348,6 +349,7 @@ func (s *State) printedTabs(items []string) func(tabDirection) (string, error) {
 								s.doBeep()
 							} else {
 								s.suspendFn()
+								goto restart
 							}
 						}
 					}
@@ -876,7 +878,7 @@ mainLoop:
 					s.doBeep()
 				} else {
 					s.suspendFn()
-					s.needRefresh = true
+					goto restart
 				}
 			// Catch keys that do nothing, but you don't want them to beep
 			case esc:
@@ -1164,7 +1166,7 @@ mainLoop:
 					s.doBeep()
 				} else {
 					s.suspendFn()
-					s.restartPrompt()
+					goto restart
 				}
 			// Unused keys
 			case esc, tab, ctrlA, ctrlB, ctrlE, ctrlF, ctrlG, ctrlK, ctrlN, ctrlO, ctrlP, ctrlQ, ctrlR, ctrlS,

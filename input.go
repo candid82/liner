@@ -21,12 +21,14 @@ type nexter struct {
 // State represents an open terminal
 type State struct {
 	commonState
-	origMode    termios
-	defaultMode termios
-	next        <-chan nexter
-	winch       chan os.Signal
-	pending     []rune
-	useCHA      bool
+	origMode        termios
+	defaultMode     termios
+	suspendMode     termios
+	haveSuspendMode bool
+	next            <-chan nexter
+	winch           chan os.Signal
+	pending         []rune
+	useCHA          bool
 }
 
 // NewLiner initializes a new *State, and sets the terminal into raw mode. To
@@ -52,6 +54,8 @@ func NewLiner() *State {
 		mode.Iflag &^= icrnl | inpck | istrip | ixon
 		mode.Cflag |= cs8
 		mode.Lflag &^= syscall.ECHO | isig | icanon | iexten
+		mode.Cc[syscall.VMIN] = 1
+		mode.Cc[syscall.VTIME] = 0
 		mode.ApplyMode()
 
 		winch := make(chan os.Signal, 1)
@@ -357,6 +361,26 @@ func (s *State) Close() error {
 		s.origMode.ApplyMode()
 	}
 	return nil
+}
+
+func (s *State) Suspend() {
+	if !s.inputRedirected {
+		if m, err := TerminalMode(); err == nil {
+			s.suspendMode = *m.(*termios)
+			s.haveSuspendMode = true
+		} else {
+			s.haveSuspendMode = false
+		}
+		s.origMode.ApplyMode()
+	}
+}
+
+func (s *State) Continue() {
+	if s.haveSuspendMode {
+		s.suspendMode.ApplyMode()
+		signal.Notify(s.winch, syscall.SIGWINCH)
+		s.checkOutput()
+	}
 }
 
 // TerminalSupported returns true if the current terminal supports
